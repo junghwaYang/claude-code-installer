@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"time"
 )
 
 const (
@@ -51,11 +50,8 @@ func (i *Installer) InstallClaudeCode() error {
 	}
 
 	// Poll for claude to become available (up to 20 seconds)
-	for attempt := 0; attempt < 20; attempt++ {
-		if _, lookErr := exec.LookPath("claude"); lookErr == nil {
-			break
-		}
-		time.Sleep(1 * time.Second)
+	if err := i.pollForCommand("claude", 20); err != nil {
+		return err
 	}
 
 	i.emitProgress(stepName, "installing", "Verifying Claude Code installation...", 80)
@@ -147,23 +143,11 @@ func (i *Installer) getInstalledClaudeVersion() (string, error) {
 
 // verifyClaudeCode checks that the claude CLI is accessible after installation.
 func (i *Installer) verifyClaudeCode() error {
-	claudePath, err := i.findClaude()
-	if err != nil {
-		return err
+	extraPaths := []string{
+		fmt.Sprintf(`%s\npm\claude.cmd`, getAppDataPath()),
+		fmt.Sprintf(`%s\npm\claude.ps1`, getAppDataPath()),
 	}
-
-	cmd := exec.CommandContext(i.ctx, claudePath, "--version")
-	hideConsoleWindow(cmd)
-	output, err := cmd.Output()
-	if err != nil {
-		return fmt.Errorf("claude command failed: %w", err)
-	}
-
-	version := strings.TrimSpace(string(output))
-	i.emitProgress("claudecode", "installing",
-		fmt.Sprintf("Verified Claude Code %s", version), 95)
-
-	return nil
+	return i.verifyExecutable("claude", "claudecode", "--version", extraPaths)
 }
 
 // findNpm locates the npm executable.

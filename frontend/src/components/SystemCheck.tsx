@@ -87,7 +87,7 @@ interface SystemCheckProps {
 
 const StatusIcon: React.FC<{ installed: boolean }> = ({ installed }) =>
   installed ? (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0" role="img" aria-label="Installed">
       <path
         d="M4 8L7 11L12 5"
         stroke="#10b981"
@@ -97,7 +97,7 @@ const StatusIcon: React.FC<{ installed: boolean }> = ({ installed }) =>
       />
     </svg>
   ) : (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0" role="img" aria-label="Not installed">
       <path
         d="M5 5L11 11M11 5L5 11"
         stroke="#ef4444"

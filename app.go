@@ -214,7 +214,20 @@ func (a *App) OpenTerminal() error {
 	}
 
 	// Reap the child process in a background goroutine to prevent resource leaks
-	go cmd.Wait()
+	go func() {
+		done := make(chan error, 1)
+		go func() {
+			done <- cmd.Wait()
+		}()
+		select {
+		case <-a.ctx.Done():
+			if cmd.Process != nil {
+				cmd.Process.Kill()
+			}
+		case <-done:
+			// Process exited normally
+		}
+	}()
 
 	return nil
 }

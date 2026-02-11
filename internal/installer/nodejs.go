@@ -6,7 +6,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"time"
 
 	"claude-code-installer/internal/pathutil"
 )
@@ -63,8 +62,7 @@ func (i *Installer) InstallNodeJS() error {
 	_ = pathutil.RefreshPath()
 
 	// Add Node.js to PATH if not already present
-	nodePath := `C:\Program Files\nodejs`
-	if err := pathutil.AddToPath(nodePath); err != nil {
+	if err := pathutil.AddToPath(defaultNodeJSPath); err != nil {
 		// Non-fatal: log but continue
 		i.emitProgress(stepName, "installing", "Warning: could not add Node.js to PATH automatically", 90)
 	}
@@ -118,6 +116,25 @@ func (i *Installer) installNodeViaMSI() error {
 		return fmt.Errorf("failed to download Node.js installer: %w", err)
 	}
 
+	// Verify download integrity via SHA-256 checksum
+	i.emitProgress("nodejs", "installing", "Verifying download integrity...", 55)
+	shasumsURL := fmt.Sprintf("%s/v%s/SHASUMS256.txt", nodeDownloadBaseURL, nodeLTSVersion)
+	shasumsContent, err := i.fetchTextContent(shasumsURL)
+	if err != nil {
+		// Log warning but don't fail - checksum verification is best-effort
+		i.emitProgress("nodejs", "installing", "Warning: could not fetch checksums, skipping verification", 60)
+	} else {
+		expectedHash, err := findChecksumInSHASUMS(shasumsContent, msiFilename)
+		if err != nil {
+			i.emitProgress("nodejs", "installing", "Warning: checksum not found for this file, skipping verification", 60)
+		} else {
+			if err := verifyFileChecksum(msiPath, expectedHash); err != nil {
+				return fmt.Errorf("Node.js installer integrity check failed: %w", err)
+			}
+			i.emitProgress("nodejs", "installing", "Download integrity verified", 65)
+		}
+	}
+
 	i.emitProgress("nodejs", "installing", "Running Node.js installer...", 70)
 
 	// Run msiexec with quiet install
@@ -129,37 +146,13 @@ func (i *Installer) installNodeViaMSI() error {
 	}
 
 	// Poll for node to become available (up to 30 seconds)
-	for attempt := 0; attempt < 30; attempt++ {
-		if _, lookErr := exec.LookPath("node"); lookErr == nil {
-			return nil
-		}
-		time.Sleep(1 * time.Second)
-	}
-
-	return nil
+	return i.pollForCommand("node", 30)
 }
 
 // verifyNode checks that node is accessible after installation.
 func (i *Installer) verifyNode() error {
-	// Try multiple paths
-	paths := []string{"node"}
-	if runtime.GOOS == "windows" {
-		paths = append(paths,
-			`C:\Program Files\nodejs\node.exe`,
-			`C:\Program Files (x86)\nodejs\node.exe`,
-		)
-	}
-
-	for _, nodePath := range paths {
-		cmd := exec.CommandContext(i.ctx, nodePath, "--version")
-		hideConsoleWindow(cmd)
-		if output, err := cmd.Output(); err == nil {
-			version := string(output)
-			i.emitProgress("nodejs", "installing",
-				fmt.Sprintf("Verified Node.js %s", version), 95)
-			return nil
-		}
-	}
-
-	return fmt.Errorf("node command not found after installation")
+	return i.verifyExecutable("node", "nodejs", "--version", []string{
+		`C:\Program Files\nodejs\node.exe`,
+		`C:\Program Files (x86)\nodejs\node.exe`,
+	})
 }

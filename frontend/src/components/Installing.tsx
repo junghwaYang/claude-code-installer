@@ -154,29 +154,29 @@ const StatusIconComponent: React.FC<{ status: string }> = ({ status }) => {
   switch (status) {
     case 'completed':
       return (
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" role="img" aria-label="Completed">
           <path d="M4 8L7 11L12 5" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       );
     case 'installing':
       return (
-        <div className="w-4 h-4 rounded-full border border-white/10 border-t-[#4361ee] animate-spin-slow" />
+        <div className="w-4 h-4 rounded-full border border-white/10 border-t-[#4361ee] animate-spin-slow" role="img" aria-label="Installing" />
       );
     case 'error':
       return (
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" role="img" aria-label="Error">
           <path d="M5 5L11 11M11 5L5 11" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
       );
     case 'skipped':
       return (
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" role="img" aria-label="Skipped">
           <path d="M5 8H11" stroke="#eab308" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
       );
     default:
       return (
-        <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
+        <div className="w-1.5 h-1.5 rounded-full bg-white/20" role="img" aria-label="Pending" />
       );
   }
 };
@@ -204,6 +204,8 @@ const Installing: React.FC<InstallingProps> = ({
   const [hasError, setHasError] = useState(false);
   const logsEndRef = useRef<HTMLDivElement>(null);
   const autoAdvanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onNextRef = useRef(onNext);
+  onNextRef.current = onNext;
 
   const scrollLogsToBottom = useCallback(() => {
     logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -215,6 +217,12 @@ const Installing: React.FC<InstallingProps> = ({
 
   // Check if all steps completed or errored
   useEffect(() => {
+    // Clear any existing timer to prevent race conditions on rapid re-renders
+    if (autoAdvanceTimerRef.current) {
+      clearTimeout(autoAdvanceTimerRef.current);
+      autoAdvanceTimerRef.current = null;
+    }
+
     const steps = Object.values(installProgress);
     const allDone = steps.every(
       (s) => s.status === 'completed' || s.status === 'skipped'
@@ -225,7 +233,7 @@ const Installing: React.FC<InstallingProps> = ({
       setInstallDone(true);
       // Auto-advance after 2 seconds
       autoAdvanceTimerRef.current = setTimeout(() => {
-        onNext();
+        onNextRef.current();
       }, 2000);
     }
 
@@ -236,9 +244,10 @@ const Installing: React.FC<InstallingProps> = ({
     return () => {
       if (autoAdvanceTimerRef.current) {
         clearTimeout(autoAdvanceTimerRef.current);
+        autoAdvanceTimerRef.current = null;
       }
     };
-  }, [installProgress, installStarted, onNext]);
+  }, [installProgress, installStarted]);
 
   // Listen for install progress events and start installation
   useEffect(() => {

@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"time"
 
 	"claude-code-installer/internal/pathutil"
 )
@@ -78,8 +77,7 @@ func (i *Installer) InstallGit() error {
 	_ = pathutil.RefreshPath()
 
 	// Add Git to PATH if not already present
-	gitPath := `C:\Program Files\Git\cmd`
-	if err := pathutil.AddToPath(gitPath); err != nil {
+	if err := pathutil.AddToPath(defaultGitPath); err != nil {
 		i.emitProgress(stepName, "installing", "Warning: could not add Git to PATH automatically", 90)
 	}
 
@@ -126,6 +124,26 @@ func (i *Installer) installGitViaDownload() error {
 		return fmt.Errorf("failed to download Git installer: %w", err)
 	}
 
+	// Verify download integrity - try to find and verify SHA-256 checksum
+	i.emitProgress("git", "installing", "Verifying download integrity...", 55)
+	checksumURL := downloadURL + ".sha256"
+	checksumContent, err := i.fetchTextContent(checksumURL)
+	if err != nil {
+		// SHA-256 file may not exist for all releases - log warning but continue
+		i.emitProgress("git", "installing", "Warning: could not fetch checksum, skipping verification", 60)
+	} else {
+		// The .sha256 file typically contains just the hash, or "hash  filename" format
+		expectedHash := strings.TrimSpace(checksumContent)
+		parts := strings.Fields(expectedHash)
+		if len(parts) > 0 {
+			expectedHash = parts[0]
+		}
+		if err := verifyFileChecksum(installerPath, expectedHash); err != nil {
+			return fmt.Errorf("Git installer integrity check failed: %w", err)
+		}
+		i.emitProgress("git", "installing", "Download integrity verified", 65)
+	}
+
 	i.emitProgress("git", "installing", "Running Git installer...", 70)
 
 	// Run the installer with silent options
@@ -146,14 +164,7 @@ func (i *Installer) installGitViaDownload() error {
 	}
 
 	// Poll for git to become available (up to 30 seconds)
-	for attempt := 0; attempt < 30; attempt++ {
-		if _, lookErr := exec.LookPath("git"); lookErr == nil {
-			return nil
-		}
-		time.Sleep(1 * time.Second)
-	}
-
-	return nil
+	return i.pollForCommand("git", 30)
 }
 
 // getGitDownloadURL fetches the latest Git for Windows download URL from GitHub.
@@ -165,7 +176,10 @@ func (i *Installer) getGitDownloadURL() (string, error) {
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
 	req.Header.Set("User-Agent", "claude-code-installer")
 
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := &http.Client{
+		Timeout:       apiRequestTimeout,
+		CheckRedirect: newTrustedCheckRedirect(gitHubTrustedHosts),
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch Git releases: %w", err)
@@ -229,12 +243,7 @@ func validateGitHubDownloadURL(rawURL string) error {
 	}
 
 	host := parsedURL.Hostname()
-	trustedHosts := []string{
-		"github.com",
-		"objects.githubusercontent.com",
-	}
-
-	for _, trusted := range trustedHosts {
+	for _, trusted := range gitHubTrustedHosts {
 		if host == trusted {
 			return nil
 		}
@@ -245,25 +254,9 @@ func validateGitHubDownloadURL(rawURL string) error {
 
 // verifyGit checks that git is accessible after installation.
 func (i *Installer) verifyGit() error {
-	paths := []string{"git"}
-	if runtime.GOOS == "windows" {
-		paths = append(paths,
-			`C:\Program Files\Git\cmd\git.exe`,
-			`C:\Program Files (x86)\Git\cmd\git.exe`,
-			`C:\Program Files\Git\bin\git.exe`,
-		)
-	}
-
-	for _, gitPath := range paths {
-		cmd := exec.CommandContext(i.ctx, gitPath, "--version")
-		hideConsoleWindow(cmd)
-		if output, err := cmd.Output(); err == nil {
-			version := string(output)
-			i.emitProgress("git", "installing",
-				fmt.Sprintf("Verified %s", strings.TrimSpace(version)), 95)
-			return nil
-		}
-	}
-
-	return fmt.Errorf("git command not found after installation")
+	return i.verifyExecutable("git", "git", "--version", []string{
+		`C:\Program Files\Git\cmd\git.exe`,
+		`C:\Program Files (x86)\Git\cmd\git.exe`,
+		`C:\Program Files\Git\bin\git.exe`,
+	})
 }
