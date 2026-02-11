@@ -33,52 +33,52 @@
 
 @layer components {
   .card {
-    @apply rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm;
+    @apply rounded-lg border border-white/5 bg-white/[0.02] backdrop-blur-sm;
   }
 
   .card-hover {
-    @apply card transition-all duration-300 hover:border-white/20 hover:bg-white/[0.07];
+    @apply card transition-all duration-300 hover:border-white/10 hover:bg-white/[0.04];
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-6 py-2.5
            bg-gradient-to-r from-[#da7756] to-[#e08a6d]
-           text-white font-semibold text-sm
-           shadow-lg shadow-[#da7756]/20
-           transition-all duration-300
-           hover:shadow-xl hover:shadow-[#da7756]/30 hover:scale-[1.02]
+           text-white font-medium text-sm
+           shadow-md shadow-[#da7756]/10
+           transition-all duration-200
+           hover:shadow-lg hover:shadow-[#da7756]/20
            active:scale-[0.98]
            disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
   }
 
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5
-           border border-white/20 bg-white/5
-           text-white/80 font-medium text-sm
-           transition-all duration-300
-           hover:border-white/30 hover:bg-white/10 hover:text-white
+           border border-white/10 bg-white/[0.02]
+           text-white/70 font-medium text-sm
+           transition-all duration-200
+           hover:border-white/20 hover:bg-white/[0.04] hover:text-white
            active:scale-[0.98]
            disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2
-           text-white/60 font-medium text-sm
+           text-white/50 font-medium text-sm
            transition-all duration-200
-           hover:text-white/90 hover:bg-white/5
+           hover:text-white/80 hover:bg-white/[0.03]
            active:scale-[0.98];
   }
 
   .code-block {
-    @apply rounded-lg border border-white/10 bg-[#0a0a14] px-4 py-3
+    @apply rounded-lg border border-white/5 bg-[#0a0a14] px-4 py-2.5
            font-mono text-sm text-[#da7756]
            select-all cursor-pointer
            transition-colors duration-200
-           hover:border-[#da7756]/30 hover:bg-[#0d0d18];
+           hover:border-[#da7756]/20 hover:bg-[#0d0d18];
   }
 
   .progress-bar {
-    @apply h-2 rounded-full bg-white/10 overflow-hidden;
+    @apply h-1.5 rounded-full bg-white/5 overflow-hidden;
   }
 
   .progress-bar-fill {

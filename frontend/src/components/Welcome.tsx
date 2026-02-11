@@ -97,15 +97,15 @@ const FeatureCard: React.FC<{
   delay: number;
 }> = ({ icon, title, description, delay }) => (
   <div
-    className="card-hover p-4 flex items-start gap-4 opacity-0 animate-fade-in-up"
+    className="p-4 flex items-start gap-4 opacity-0 animate-fade-in-up border-l border-white/5 hover:border-white/10 transition-colors duration-200"
     style={{ animationDelay: `${delay}ms` }}
   >
-    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-[#da7756]/20 to-[#4361ee]/20 flex items-center justify-center text-[#da7756]">
+    <div className="flex-shrink-0 text-[#da7756]/70">
       {icon}
     </div>
     <div className="min-w-0">
-      <h3 className="text-sm font-semibold text-white mb-1">{title}</h3>
-      <p className="text-xs text-white/50 leading-relaxed">{description}</p>
+      <h3 className="text-sm font-medium text-white mb-1">{title}</h3>
+      <p className="text-xs text-white/40 leading-relaxed">{description}</p>
     </div>
   </div>
 );
@@ -133,7 +133,7 @@ const Welcome: React.FC<WelcomeProps> = ({ locale, onNext }) => {
       </div>
 
       {/* Feature Cards */}
-      <div className="w-full max-w-md space-y-3 mb-8">
+      <div className="w-full max-w-md space-y-1 mb-8">
         <FeatureCard
           icon={
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">

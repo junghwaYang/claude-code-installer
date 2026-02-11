@@ -162,35 +162,35 @@ const LoginGuide: React.FC<LoginGuideProps> = ({ locale, onNext, onBack }) => {
 
       {/* Guide Steps */}
       <div className="flex-1 overflow-auto scrollbar-dark">
-        <div className="space-y-3 stagger-children">
+        <div className="space-y-4 stagger-children">
           {guideSteps.map((step, index) => (
             <div
               key={index}
-              className="flex items-start gap-4 opacity-0 animate-fade-in-up"
+              className="flex items-start gap-4 opacity-0 animate-fade-in-up relative"
               style={{ animationDelay: `${index * 80}ms` }}
             >
               {/* Step Number */}
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-[#da7756]/20 to-[#4361ee]/20 border border-white/10 flex items-center justify-center">
-                <span className="text-xs font-bold text-[#da7756]">
+              <div className="flex-shrink-0 w-6 h-6 rounded-full border border-white/10 flex items-center justify-center">
+                <span className="text-xs font-medium text-[#da7756]">
                   {index + 1}
                 </span>
               </div>
 
               {/* Step Content */}
-              <div className="flex-1 pb-3">
+              <div className="flex-1 pb-2">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-white/50">{step.icon}</span>
-                  <h3 className="text-sm font-semibold text-white">
+                  <span className="text-white/40">{step.icon}</span>
+                  <h3 className="text-sm font-medium text-white">
                     {t(translations, step.titleKey, locale)}
                   </h3>
                 </div>
-                <p className="text-xs text-white/40 leading-relaxed ml-7">
+                <p className="text-xs text-white/40 leading-relaxed">
                   {t(translations, step.descKey, locale)}
                 </p>
 
                 {/* Code Block for step 2 */}
                 {step.hasCodeBlock && (
-                  <div className="ml-7 mt-2">
+                  <div className="mt-2">
                     <div className="code-block flex items-center justify-between">
                       <span>claude</span>
                       <span className="text-[10px] text-white/20 select-none">
@@ -203,14 +203,14 @@ const LoginGuide: React.FC<LoginGuideProps> = ({ locale, onNext, onBack }) => {
 
               {/* Connector Line (except last) */}
               {index < guideSteps.length - 1 && (
-                <div className="absolute left-[2.35rem] top-10 w-px h-[calc(100%-2.5rem)] bg-white/5" />
+                <div className="absolute left-3 top-8 w-px h-[calc(100%-1rem)] bg-white/5" />
               )}
             </div>
           ))}
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3 mt-5 opacity-0 animate-fade-in-up" style={{ animationDelay: '450ms' }}>
+        <div className="flex gap-3 mt-6 opacity-0 animate-fade-in-up" style={{ animationDelay: '450ms' }}>
           <button onClick={handleOpenTerminal} className="btn-primary flex-1">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.5" />

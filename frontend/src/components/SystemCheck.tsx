@@ -87,28 +87,24 @@ interface SystemCheckProps {
 
 const StatusIcon: React.FC<{ installed: boolean }> = ({ installed }) =>
   installed ? (
-    <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-        <path
-          d="M3 7L6 10L11 4"
-          stroke="#10b981"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </div>
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
+      <path
+        d="M4 8L7 11L12 5"
+        stroke="#10b981"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   ) : (
-    <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-        <path
-          d="M4 4L10 10M10 4L4 10"
-          stroke="#ef4444"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-      </svg>
-    </div>
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
+      <path
+        d="M5 5L11 11M11 5L5 11"
+        stroke="#ef4444"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 
 const SoftwareRow: React.FC<{
@@ -119,36 +115,37 @@ const SoftwareRow: React.FC<{
   delay: number;
 }> = ({ name, installed, version, locale, delay }) => (
   <div
-    className="flex items-center justify-between py-3 px-4 rounded-lg bg-white/[0.03] border border-white/5 opacity-0 animate-fade-in-up"
+    className="flex items-center justify-between py-3 px-4 rounded-lg bg-white/[0.02] border border-white/5 opacity-0 animate-fade-in-up"
     style={{ animationDelay: `${delay}ms` }}
   >
     <div className="flex items-center gap-3">
       <StatusIcon installed={installed} />
       <span className="text-sm font-medium text-white">{name}</span>
     </div>
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2.5">
       {installed && version && (
         <span className="text-xs text-white/40 font-mono">v{version}</span>
       )}
-      <span
-        className={`text-xs px-2 py-0.5 rounded-full ${
-          installed
-            ? 'bg-emerald-500/10 text-emerald-400'
-            : 'bg-red-500/10 text-red-400'
-        }`}
-      >
-        {installed
-          ? t(translations, 'installed', locale)
-          : t(translations, 'notInstalled', locale)}
-      </span>
+      <div className="flex items-center gap-1.5">
+        <div
+          className={`w-1.5 h-1.5 rounded-full ${
+            installed ? 'bg-emerald-400' : 'bg-red-400'
+          }`}
+        />
+        <span className="text-xs text-white/40">
+          {installed
+            ? t(translations, 'installed', locale)
+            : t(translations, 'notInstalled', locale)}
+        </span>
+      </div>
     </div>
   </div>
 );
 
 const LoadingSpinner: React.FC = () => (
   <div className="flex flex-col items-center justify-center py-16">
-    <div className="w-12 h-12 rounded-full border-2 border-white/10 border-t-[#da7756] animate-spin-slow mb-4" />
-    <p className="text-sm text-white/50 animate-pulse-soft">
+    <div className="w-8 h-8 rounded-full border border-white/10 border-t-[#da7756] animate-spin-slow mb-4" />
+    <p className="text-sm text-white/40 animate-pulse-soft">
       Checking system...
     </p>
   </div>
@@ -247,7 +244,7 @@ const SystemCheck: React.FC<SystemCheckProps> = ({
               style={{ animationDelay: '200ms' }}
             >
               <div
-                className={`w-2 h-2 rounded-full ${
+                className={`w-1.5 h-1.5 rounded-full ${
                   result.wingetAvailable ? 'bg-emerald-400' : 'bg-yellow-400'
                 }`}
               />
@@ -264,18 +261,18 @@ const SystemCheck: React.FC<SystemCheckProps> = ({
               style={{ animationDelay: '250ms' }}
             >
               {result.nodejs.installed && result.git.installed && result.claudeCode.installed ? (
-                <div className="card p-4 border-emerald-500/20 bg-emerald-500/5 text-center">
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <div className="p-4 rounded-lg border border-emerald-500/10 bg-emerald-500/[0.03] text-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                       <path
-                        d="M4 10L8 14L16 6"
+                        d="M4 8L7 11L12 5"
                         stroke="#10b981"
-                        strokeWidth="2"
+                        strokeWidth="1.5"
                         strokeLinecap="round"
                         strokeLinejoin="round"
                       />
                     </svg>
-                    <span className="text-sm font-semibold text-emerald-400">
+                    <span className="text-sm font-medium text-emerald-400">
                       {t(translations, 'allInstalled', locale)}
                     </span>
                   </div>

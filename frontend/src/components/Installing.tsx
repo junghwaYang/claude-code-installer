@@ -129,23 +129,23 @@ const stepInfo: Record<string, { icon: React.ReactNode; nameKey: string; descKey
 
 const statusStyles: Record<string, { badge: string; text: string }> = {
   pending: {
-    badge: 'bg-white/10 text-white/40',
+    badge: 'bg-white/20',
     text: 'pending',
   },
   installing: {
-    badge: 'bg-blue-500/10 text-blue-400',
+    badge: 'bg-blue-400',
     text: 'installing',
   },
   completed: {
-    badge: 'bg-emerald-500/10 text-emerald-400',
+    badge: 'bg-emerald-400',
     text: 'completed',
   },
   skipped: {
-    badge: 'bg-yellow-500/10 text-yellow-400',
+    badge: 'bg-yellow-400',
     text: 'skipped',
   },
   error: {
-    badge: 'bg-red-500/10 text-red-400',
+    badge: 'bg-red-400',
     text: 'error',
   },
 };
@@ -154,37 +154,29 @@ const StatusIconComponent: React.FC<{ status: string }> = ({ status }) => {
   switch (status) {
     case 'completed':
       return (
-        <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M3 7L6 10L11 4" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M4 8L7 11L12 5" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       );
     case 'installing':
       return (
-        <div className="w-6 h-6 rounded-full border-2 border-white/10 border-t-[#4361ee] animate-spin-slow" />
+        <div className="w-4 h-4 rounded-full border border-white/10 border-t-[#4361ee] animate-spin-slow" />
       );
     case 'error':
       return (
-        <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M4 4L10 10M10 4L4 10" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-        </div>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M5 5L11 11M11 5L5 11" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
       );
     case 'skipped':
       return (
-        <div className="w-6 h-6 rounded-full bg-yellow-500/20 flex items-center justify-center">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M4 7H10" stroke="#eab308" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-        </div>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M5 8H11" stroke="#eab308" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
       );
     default:
       return (
-        <div className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center">
-          <div className="w-2 h-2 rounded-full bg-white/20" />
-        </div>
+        <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
       );
   }
 };
@@ -323,7 +315,7 @@ const Installing: React.FC<InstallingProps> = ({
       </div>
 
       {/* Install Steps */}
-      <div className="flex-1 space-y-3 overflow-auto scrollbar-dark">
+      <div className="flex-1 space-y-2 overflow-auto scrollbar-dark">
         {['nodejs', 'git', 'claudecode'].map((stepKey) => {
           const info = stepInfo[stepKey];
           const progress = installProgress[stepKey];
@@ -332,15 +324,15 @@ const Installing: React.FC<InstallingProps> = ({
           return (
             <div
               key={stepKey}
-              className={`card p-4 transition-all duration-300 ${
+              className={`p-4 rounded-lg border transition-all duration-300 ${
                 progress?.status === 'installing'
-                  ? 'border-[#4361ee]/30 bg-[#4361ee]/5'
-                  : ''
+                  ? 'border-[#4361ee]/20 bg-[#4361ee]/[0.03]'
+                  : 'border-white/5 bg-white/[0.02]'
               }`}
             >
               <div className="flex items-center gap-4">
                 {/* Icon */}
-                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
+                <div className="flex-shrink-0 text-white/50">
                   {info.icon}
                 </div>
 
@@ -350,7 +342,8 @@ const Installing: React.FC<InstallingProps> = ({
                     <span className="text-sm font-medium text-white">
                       {t(translations, info.nameKey, locale)}
                     </span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${style.badge}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${style.badge}`} />
+                    <span className="text-[10px] text-white/40">
                       {t(translations, style.text, locale)}
                     </span>
                   </div>
@@ -378,12 +371,12 @@ const Installing: React.FC<InstallingProps> = ({
 
         {/* Completion / Error Message */}
         {installDone && !hasError && (
-          <div className="card p-4 border-emerald-500/20 bg-emerald-500/5 text-center animate-scale-in">
+          <div className="p-4 rounded-lg border border-emerald-500/10 bg-emerald-500/[0.03] text-center animate-scale-in">
             <div className="flex items-center justify-center gap-2">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M4 10L8 14L16 6" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M4 8L7 11L12 5" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <span className="text-sm font-semibold text-emerald-400">
+              <span className="text-sm font-medium text-emerald-400">
                 {t(translations, 'installComplete', locale)}
               </span>
             </div>
@@ -394,7 +387,7 @@ const Installing: React.FC<InstallingProps> = ({
         )}
 
         {hasError && (
-          <div className="card p-4 border-red-500/20 bg-red-500/5 text-center animate-scale-in">
+          <div className="p-4 rounded-lg border border-red-500/10 bg-red-500/[0.03] text-center animate-scale-in">
             <p className="text-sm text-red-400 mb-3">
               {t(translations, 'installError', locale)}
             </p>
@@ -426,7 +419,7 @@ const Installing: React.FC<InstallingProps> = ({
         </button>
 
         {showLogs && (
-          <div className="mt-2 rounded-lg border border-white/10 bg-[#0a0a14] max-h-32 overflow-auto scrollbar-dark animate-scale-in">
+          <div className="mt-2 rounded-lg border border-white/5 bg-[#0a0a14] max-h-32 overflow-auto scrollbar-dark animate-scale-in">
             <div className="p-3 font-mono text-[10px] text-white/40 space-y-0.5">
               {logs.length === 0 ? (
                 <p className="text-white/20">No logs yet...</p>

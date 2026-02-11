@@ -89,34 +89,15 @@ const links = [
       </svg>
     ),
   },
-  {
-    nameKey: 'community',
-    url: 'https://discord.gg/anthropic',
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-        <path d="M14.5 3.5C13.35 3 12.12 2.63 10.83 2.44C10.67 2.73 10.5 3.11 10.38 3.41C9.01 3.24 7.66 3.24 6.31 3.41C6.19 3.11 6.01 2.73 5.86 2.44C4.56 2.63 3.34 3 2.19 3.51C0.31 6.35 -0.19 9.12 0.06 11.85C1.55 12.97 2.99 13.65 4.41 14.1C4.77 13.61 5.09 13.09 5.37 12.53C4.84 12.34 4.33 12.1 3.85 11.82C3.97 11.73 4.09 11.64 4.2 11.54C6.66 12.69 9.36 12.69 11.79 11.54C11.91 11.64 12.02 11.73 12.14 11.82C11.66 12.1 11.15 12.34 10.62 12.53C10.9 13.09 11.22 13.61 11.58 14.1C13 13.65 14.45 12.97 15.94 11.85C16.23 8.7 15.33 5.95 14.5 3.5Z" stroke="currentColor" strokeWidth="1.2" />
-        <circle cx="6" cy="9" r="1" fill="currentColor" />
-        <circle cx="12" cy="9" r="1" fill="currentColor" />
-      </svg>
-    ),
-  },
 ];
 
 const CheckmarkAnimation: React.FC = () => (
-  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 flex items-center justify-center mb-4 animate-scale-in">
-    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-      <circle
-        cx="20"
-        cy="20"
-        r="16"
+  <div className="w-16 h-16 rounded-full bg-emerald-500/[0.06] flex items-center justify-center mb-4 animate-scale-in">
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+      <path
+        d="M10 16L14 20L22 11"
         stroke="#10b981"
         strokeWidth="2"
-        opacity="0.3"
-      />
-      <path
-        d="M12 20L18 26L28 14"
-        stroke="#10b981"
-        strokeWidth="3"
         strokeLinecap="round"
         strokeLinejoin="round"
         className="animate-checkmark"
@@ -130,14 +111,14 @@ const SoftwareVersionRow: React.FC<{
   version: string;
   installed: boolean;
 }> = ({ name, version, installed }) => (
-  <div className="flex items-center justify-between py-2">
-    <div className="flex items-center gap-2">
+  <div className="flex items-center justify-between py-2.5">
+    <div className="flex items-center gap-2.5">
       <div
-        className={`w-2 h-2 rounded-full ${
+        className={`w-1.5 h-1.5 rounded-full ${
           installed ? 'bg-emerald-400' : 'bg-white/20'
         }`}
       />
-      <span className="text-sm text-white/80">{name}</span>
+      <span className="text-sm text-white/70">{name}</span>
     </div>
     {installed && version && (
       <span className="text-xs font-mono text-white/40">v{version}</span>
@@ -173,9 +154,9 @@ const Complete: React.FC<CompleteProps> = ({ locale, systemCheck }) => {
   return (
     <div className="flex flex-col items-center h-full px-8 py-6 overflow-auto scrollbar-dark">
       {/* Celebration */}
-      <div className="flex flex-col items-center text-center mb-6 pt-2">
+      <div className="flex flex-col items-center text-center mb-8 pt-2">
         <CheckmarkAnimation />
-        <h2 className="text-2xl font-bold text-white mb-1 animate-fade-in-up">
+        <h2 className="text-xl font-semibold text-white mb-1 animate-fade-in-up">
           {t(translations, 'title', locale)}
         </h2>
         <p className="text-sm text-white/40 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
@@ -186,13 +167,13 @@ const Complete: React.FC<CompleteProps> = ({ locale, systemCheck }) => {
       {/* Installed Software Card */}
       {systemCheck && (
         <div
-          className="card w-full max-w-md p-4 mb-4 opacity-0 animate-fade-in-up"
+          className="w-full max-w-md p-5 rounded-lg border border-white/5 bg-white/[0.02] mb-4 opacity-0 animate-fade-in-up"
           style={{ animationDelay: '150ms' }}
         >
-          <h3 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">
+          <h3 className="text-xs font-medium text-white/40 uppercase tracking-wider mb-3">
             {t(translations, 'installedSoftware', locale)}
           </h3>
-          <div className="divide-y divide-white/5">
+          <div className="divide-y divide-white/[0.03]">
             <SoftwareVersionRow
               name={t(translations, 'nodejs', locale)}
               version={systemCheck.nodejs.version}
@@ -214,21 +195,21 @@ const Complete: React.FC<CompleteProps> = ({ locale, systemCheck }) => {
 
       {/* Useful Links */}
       <div
-        className="card w-full max-w-md p-4 mb-6 opacity-0 animate-fade-in-up"
+        className="w-full max-w-md p-5 rounded-lg border border-white/5 bg-white/[0.02] mb-6 opacity-0 animate-fade-in-up"
         style={{ animationDelay: '250ms' }}
       >
-        <h3 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">
+        <h3 className="text-xs font-medium text-white/40 uppercase tracking-wider mb-3">
           {t(translations, 'usefulLinks', locale)}
         </h3>
-        <div className="space-y-2">
+        <div className="space-y-1">
           {links.map((link) => (
             <button
               key={link.nameKey}
               onClick={() => handleOpenLink(link.url)}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md
                          text-left text-sm text-white/60
                          transition-all duration-200
-                         hover:bg-white/5 hover:text-white/90"
+                         hover:bg-white/[0.04] hover:text-white/90"
             >
               <span className="text-white/40">{link.icon}</span>
               <span>{t(translations, link.nameKey, locale)}</span>
