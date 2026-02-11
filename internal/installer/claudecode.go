@@ -2,7 +2,9 @@ package installer
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -48,8 +50,13 @@ func (i *Installer) InstallClaudeCode() error {
 		return fmt.Errorf("failed to install Claude Code: %w", err)
 	}
 
-	// Wait briefly for installation to finalize
-	time.Sleep(2 * time.Second)
+	// Poll for claude to become available (up to 20 seconds)
+	for attempt := 0; attempt < 20; attempt++ {
+		if _, lookErr := exec.LookPath("claude"); lookErr == nil {
+			break
+		}
+		time.Sleep(1 * time.Second)
+	}
 
 	i.emitProgress(stepName, "installing", "Verifying Claude Code installation...", 80)
 
@@ -210,11 +217,15 @@ func (i *Installer) findClaude() (string, error) {
 
 // getAppDataPath returns the APPDATA directory path.
 func getAppDataPath() string {
-	appdata := exec.Command("cmd", "/c", "echo", "%APPDATA%")
-	hideConsoleWindow(appdata)
-	output, err := appdata.Output()
-	if err != nil {
-		return `C:\Users\Default\AppData\Roaming`
+	appdata := os.Getenv("APPDATA")
+	if appdata != "" {
+		return appdata
 	}
-	return strings.TrimSpace(string(output))
+
+	// Fallback: derive from user home directory
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return filepath.Join("C:\\Users\\Default", "AppData", "Roaming")
+	}
+	return filepath.Join(home, "AppData", "Roaming")
 }

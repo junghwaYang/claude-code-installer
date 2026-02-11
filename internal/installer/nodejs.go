@@ -104,17 +104,17 @@ func (i *Installer) installNodeViaMSI() error {
 	msiFilename := fmt.Sprintf("node-v%s-%s.msi", nodeLTSVersion, arch)
 	downloadURL := fmt.Sprintf("%s/v%s/%s", nodeDownloadBaseURL, nodeLTSVersion, msiFilename)
 
-	// Create temp directory for download
+	// Create temp directory for download (unique per call, caller must clean up)
 	tempDir, err := getTempDir()
 	if err != nil {
 		return err
 	}
+	defer os.RemoveAll(tempDir)
 
 	msiPath := filepath.Join(tempDir, msiFilename)
-	defer os.Remove(msiPath) // Clean up after installation
 
-	// Download the MSI
-	if err := i.downloadFile(downloadURL, msiPath, "nodejs"); err != nil {
+	// Download the MSI with retry logic
+	if err := i.downloadFileWithRetry(downloadURL, msiPath, "nodejs"); err != nil {
 		return fmt.Errorf("failed to download Node.js installer: %w", err)
 	}
 
@@ -128,8 +128,13 @@ func (i *Installer) installNodeViaMSI() error {
 		return fmt.Errorf("msiexec failed: %w", err)
 	}
 
-	// Wait briefly for installation to complete
-	time.Sleep(3 * time.Second)
+	// Poll for node to become available (up to 30 seconds)
+	for attempt := 0; attempt < 30; attempt++ {
+		if _, lookErr := exec.LookPath("node"); lookErr == nil {
+			return nil
+		}
+		time.Sleep(1 * time.Second)
+	}
 
 	return nil
 }

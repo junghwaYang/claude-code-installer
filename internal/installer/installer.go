@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"time"
 )
@@ -76,6 +75,25 @@ func (i *Installer) runCommandSilent(name string, args ...string) error {
 	return nil
 }
 
+// downloadFileWithRetry wraps downloadFile with exponential backoff retry logic.
+func (i *Installer) downloadFileWithRetry(url, destPath, stepName string) error {
+	maxRetries := 3
+	var lastErr error
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		lastErr = i.downloadFile(url, destPath, stepName)
+		if lastErr == nil {
+			return nil
+		}
+		if attempt < maxRetries-1 {
+			backoff := time.Duration(1<<uint(attempt)) * time.Second
+			i.emitProgress(stepName, "installing",
+				fmt.Sprintf("Download failed, retrying in %v... (attempt %d/%d)", backoff, attempt+2, maxRetries), 0)
+			time.Sleep(backoff)
+		}
+	}
+	return fmt.Errorf("download failed after %d attempts: %w", maxRetries, lastErr)
+}
+
 // downloadFile downloads a file from the given URL to a local path with progress tracking.
 func (i *Installer) downloadFile(url, destPath, stepName string) error {
 	i.emitProgress(stepName, "installing", fmt.Sprintf("Downloading from %s...", url), 0)
@@ -99,12 +117,11 @@ func (i *Installer) downloadFile(url, destPath, stepName string) error {
 		return fmt.Errorf("download returned status %d", resp.StatusCode)
 	}
 
-	// Create destination file
-	out, err := os.Create(destPath)
+	// Create destination file with restricted permissions (owner read/write only)
+	out, err := os.OpenFile(destPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		return fmt.Errorf("failed to create file %s: %w", destPath, err)
 	}
-	defer out.Close()
 
 	// Track download progress
 	totalSize := resp.ContentLength
@@ -123,6 +140,11 @@ func (i *Installer) downloadFile(url, destPath, stepName string) error {
 		_, err = io.Copy(out, resp.Body)
 	}
 
+	// Check close error to catch write failures (e.g., disk full)
+	if closeErr := out.Close(); closeErr != nil {
+		return fmt.Errorf("failed to finalize downloaded file: %w", closeErr)
+	}
+
 	if err != nil {
 		return fmt.Errorf("failed to write downloaded file: %w", err)
 	}
@@ -130,10 +152,11 @@ func (i *Installer) downloadFile(url, destPath, stepName string) error {
 	return nil
 }
 
-// getTempDir returns a temporary directory for downloads, creating it if necessary.
+// getTempDir returns a unique temporary directory for downloads with restricted permissions.
+// Callers are responsible for cleaning up the returned directory with os.RemoveAll.
 func getTempDir() (string, error) {
-	tempDir := filepath.Join(os.TempDir(), "claude-code-installer")
-	if err := os.MkdirAll(tempDir, 0755); err != nil {
+	tempDir, err := os.MkdirTemp("", "claude-code-installer-*")
+	if err != nil {
 		return "", fmt.Errorf("failed to create temp directory: %w", err)
 	}
 	return tempDir, nil

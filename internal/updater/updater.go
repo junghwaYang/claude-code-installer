@@ -1,6 +1,7 @@
 package updater
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -45,12 +46,14 @@ type GitHubAsset struct {
 
 // UpdateChecker handles checking for application updates.
 type UpdateChecker struct {
+	ctx        context.Context
 	httpClient *http.Client
 }
 
-// NewUpdateChecker creates a new UpdateChecker instance.
-func NewUpdateChecker() *UpdateChecker {
+// NewUpdateChecker creates a new UpdateChecker instance with context support.
+func NewUpdateChecker(ctx context.Context) *UpdateChecker {
 	return &UpdateChecker{
+		ctx: ctx,
 		httpClient: &http.Client{
 			Timeout: 15 * time.Second,
 		},
@@ -83,7 +86,7 @@ func (uc *UpdateChecker) GetLatestRelease() (string, string, error) {
 	url := fmt.Sprintf("%s/repos/%s/%s/releases/latest",
 		githubAPIBaseURL, githubRepoOwner, githubRepoName)
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequestWithContext(uc.ctx, "GET", url, nil)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to create request: %w", err)
 	}

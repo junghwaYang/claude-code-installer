@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	neturl "net/url"
 	"os/exec"
 	goruntime "runtime"
+	"strings"
 
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 
@@ -211,26 +213,46 @@ func (a *App) OpenTerminal() error {
 		return fmt.Errorf("failed to open terminal: %w", err)
 	}
 
+	// Reap the child process in a background goroutine to prevent resource leaks
+	go cmd.Wait()
+
 	return nil
 }
 
 // OpenURL opens the specified URL in the default web browser.
-func (a *App) OpenURL(url string) error {
-	var cmd *exec.Cmd
-
-	switch goruntime.GOOS {
-	case "windows":
-		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
-	case "darwin":
-		cmd = exec.Command("open", url)
-	default:
-		cmd = exec.Command("xdg-open", url)
+// Only HTTPS URLs to allowlisted domains are permitted.
+func (a *App) OpenURL(urlStr string) error {
+	parsedURL, err := neturl.Parse(urlStr)
+	if err != nil {
+		return fmt.Errorf("invalid URL: %w", err)
 	}
 
-	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("failed to open URL: %w", err)
+	if parsedURL.Scheme != "https" {
+		return fmt.Errorf("only HTTPS URLs are allowed")
 	}
 
+	allowedDomains := []string{
+		"docs.anthropic.com",
+		"console.anthropic.com",
+		"github.com",
+		"anthropic.com",
+		"www.anthropic.com",
+	}
+
+	host := parsedURL.Hostname()
+	allowed := false
+	for _, domain := range allowedDomains {
+		if host == domain || strings.HasSuffix(host, "."+domain) {
+			allowed = true
+			break
+		}
+	}
+
+	if !allowed {
+		return fmt.Errorf("URL domain %q is not in the allowlist", host)
+	}
+
+	wailsRuntime.BrowserOpenURL(a.ctx, urlStr)
 	return nil
 }
 

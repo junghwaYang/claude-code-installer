@@ -4,6 +4,8 @@ package pathutil
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"unsafe"
@@ -48,6 +50,16 @@ func GetUserPath() (string, error) {
 // It modifies the registry and broadcasts a WM_SETTINGCHANGE message to notify
 // other processes of the environment change.
 func AddToPath(dir string) error {
+	// Validate that the path is absolute
+	if !filepath.IsAbs(dir) {
+		return fmt.Errorf("path must be absolute: %s", dir)
+	}
+
+	// Validate that the directory exists
+	if _, err := os.Stat(dir); err != nil {
+		return fmt.Errorf("path does not exist: %w", err)
+	}
+
 	currentPath, err := GetUserPath()
 	if err != nil {
 		return fmt.Errorf("failed to get current PATH: %w", err)
@@ -95,6 +107,8 @@ func BroadcastSettingChange() error {
 		return fmt.Errorf("failed to convert string: %w", err)
 	}
 
+	// Win32 SendMessageTimeoutW requires LPCWSTR as uintptr; unsafe conversion is
+	// necessary to satisfy the syscall ABI for string parameters.
 	ret, _, callErr := sendMessageTimeout.Call(
 		uintptr(hwndBroadcast),
 		uintptr(wmSettingChange),

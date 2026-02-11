@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -111,17 +112,17 @@ func (i *Installer) installGitViaDownload() error {
 		return fmt.Errorf("failed to get Git download URL: %w", err)
 	}
 
-	// Create temp directory for download
+	// Create temp directory for download (unique per call, caller must clean up)
 	tempDir, err := getTempDir()
 	if err != nil {
 		return err
 	}
+	defer os.RemoveAll(tempDir)
 
 	installerPath := filepath.Join(tempDir, "Git-installer.exe")
-	defer os.Remove(installerPath)
 
-	// Download the installer
-	if err := i.downloadFile(downloadURL, installerPath, "git"); err != nil {
+	// Download the installer with retry logic
+	if err := i.downloadFileWithRetry(downloadURL, installerPath, "git"); err != nil {
 		return fmt.Errorf("failed to download Git installer: %w", err)
 	}
 
@@ -144,8 +145,13 @@ func (i *Installer) installGitViaDownload() error {
 		return fmt.Errorf("Git installer failed: %w", err)
 	}
 
-	// Wait for installation to complete
-	time.Sleep(3 * time.Second)
+	// Poll for git to become available (up to 30 seconds)
+	for attempt := 0; attempt < 30; attempt++ {
+		if _, lookErr := exec.LookPath("git"); lookErr == nil {
+			return nil
+		}
+		time.Sleep(1 * time.Second)
+	}
 
 	return nil
 }
@@ -188,6 +194,9 @@ func (i *Installer) getGitDownloadURL() (string, error) {
 			strings.HasSuffix(name, ".exe") &&
 			!strings.Contains(name, "portable") &&
 			!strings.Contains(name, "mingit") {
+			if err := validateGitHubDownloadURL(asset.BrowserDownloadURL); err != nil {
+				continue
+			}
 			return asset.BrowserDownloadURL, nil
 		}
 	}
@@ -198,11 +207,40 @@ func (i *Installer) getGitDownloadURL() (string, error) {
 		if strings.HasSuffix(name, ".exe") &&
 			!strings.Contains(name, "portable") &&
 			!strings.Contains(name, "mingit") {
+			if err := validateGitHubDownloadURL(asset.BrowserDownloadURL); err != nil {
+				continue
+			}
 			return asset.BrowserDownloadURL, nil
 		}
 	}
 
 	return "", fmt.Errorf("could not find Git installer in latest release")
+}
+
+// validateGitHubDownloadURL ensures the download URL is from a trusted GitHub domain.
+func validateGitHubDownloadURL(rawURL string) error {
+	parsedURL, err := url.Parse(rawURL)
+	if err != nil {
+		return fmt.Errorf("invalid download URL: %w", err)
+	}
+
+	if parsedURL.Scheme != "https" {
+		return fmt.Errorf("download URL must use HTTPS")
+	}
+
+	host := parsedURL.Hostname()
+	trustedHosts := []string{
+		"github.com",
+		"objects.githubusercontent.com",
+	}
+
+	for _, trusted := range trustedHosts {
+		if host == trusted {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("download URL host %q is not trusted", host)
 }
 
 // verifyGit checks that git is accessible after installation.
