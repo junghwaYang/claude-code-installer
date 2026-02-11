@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { GetAppVersion } from '../wailsjs/go/main/App';
+import { GetAppVersion } from '../../wailsjs/go/main/App';
 import { type Locale, t } from '../hooks/useInstaller';
 
 const translations = {

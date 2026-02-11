@@ -1,5 +1,5 @@
 import React from 'react';
-import { OpenTerminal, OpenURL } from '../wailsjs/go/main/App';
+import { OpenTerminal, OpenURL } from '../../wailsjs/go/main/App';
 import { type Locale, t } from '../hooks/useInstaller';
 
 const translations = {

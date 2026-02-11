@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CheckSystem } from '../wailsjs/go/main/App';
+import { CheckSystem } from '../../wailsjs/go/main/App';
 import {
   type Locale,
   type SystemCheckResult,

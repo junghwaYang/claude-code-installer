@@ -1,5 +1,5 @@
 // Wails v2 Runtime API type declarations
-declare module '*/wailsjs/runtime/runtime' {
+declare module '../../wailsjs/runtime/runtime' {
   /**
    * Subscribe to a Wails event. Returns an unsubscribe function.
    */
@@ -74,7 +74,7 @@ declare module '*/wailsjs/runtime/runtime' {
 }
 
 // Wails Go Backend Bindings
-declare module '*/wailsjs/go/main/App' {
+declare module '../../wailsjs/go/main/App' {
   /**
    * Checks the system for required software (Node.js, Git, Claude Code).
    * Returns a SystemCheckResult object.
