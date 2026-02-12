@@ -3,6 +3,7 @@ package installer
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"runtime"
 	"strings"
 
+	"claude-code-installer/internal/httputil"
 	"claude-code-installer/internal/pathutil"
 )
 
@@ -124,25 +126,23 @@ func (i *Installer) installGitViaDownload() error {
 		return fmt.Errorf("failed to download Git installer: %w", err)
 	}
 
-	// Verify download integrity - try to find and verify SHA-256 checksum
+	// Verify download integrity via SHA-256 checksum (mandatory)
 	i.emitProgress("git", "installing", "Verifying download integrity...", 55)
 	checksumURL := downloadURL + ".sha256"
 	checksumContent, err := i.fetchTextContent(checksumURL)
 	if err != nil {
-		// SHA-256 file may not exist for all releases - log warning but continue
-		i.emitProgress("git", "installing", "Warning: could not fetch checksum, skipping verification", 60)
-	} else {
-		// The .sha256 file typically contains just the hash, or "hash  filename" format
-		expectedHash := strings.TrimSpace(checksumContent)
-		parts := strings.Fields(expectedHash)
-		if len(parts) > 0 {
-			expectedHash = parts[0]
-		}
-		if err := verifyFileChecksum(installerPath, expectedHash); err != nil {
-			return fmt.Errorf("Git installer integrity check failed: %w", err)
-		}
-		i.emitProgress("git", "installing", "Download integrity verified", 65)
+		return fmt.Errorf("failed to verify Git download integrity (could not fetch checksum): %w", err)
 	}
+	// The .sha256 file typically contains just the hash, or "hash  filename" format
+	expectedHash := strings.TrimSpace(checksumContent)
+	parts := strings.Fields(expectedHash)
+	if len(parts) > 0 {
+		expectedHash = parts[0]
+	}
+	if err := verifyFileChecksum(installerPath, expectedHash); err != nil {
+		return fmt.Errorf("Git installer integrity check failed: %w", err)
+	}
+	i.emitProgress("git", "installing", "Download integrity verified", 65)
 
 	i.emitProgress("git", "installing", "Running Git installer...", 70)
 
@@ -178,7 +178,7 @@ func (i *Installer) getGitDownloadURL() (string, error) {
 
 	client := &http.Client{
 		Timeout:       apiRequestTimeout,
-		CheckRedirect: newTrustedCheckRedirect(gitHubTrustedHosts),
+		CheckRedirect: httputil.NewTrustedCheckRedirect(httputil.GitHubTrustedHosts()),
 	}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -191,7 +191,7 @@ func (i *Installer) getGitDownloadURL() (string, error) {
 	}
 
 	var release gitRelease
-	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
+	if err := json.NewDecoder(io.LimitReader(resp.Body, maxTextResponseSize)).Decode(&release); err != nil {
 		return "", fmt.Errorf("failed to parse release info: %w", err)
 	}
 
@@ -243,7 +243,7 @@ func validateGitHubDownloadURL(rawURL string) error {
 	}
 
 	host := parsedURL.Hostname()
-	for _, trusted := range gitHubTrustedHosts {
+	for _, trusted := range httputil.GitHubTrustedHosts() {
 		if host == trusted {
 			return nil
 		}

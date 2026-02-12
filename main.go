@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"log"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -28,8 +29,8 @@ func main() {
 		},
 		BackgroundColour: &options.RGBA{R: 26, G: 26, B: 46, A: 1},
 		OnStartup:        app.startup,
-		Frameless:         false,
-		StartHidden:       false,
+		Frameless:        false,
+		StartHidden:      false,
 		Bind: []interface{}{
 			app,
 		},
@@ -45,6 +46,6 @@ func main() {
 	})
 
 	if err != nil {
-		println("Error:", err.Error())
+		log.Fatalf("Application error: %v", err)
 	}
 }

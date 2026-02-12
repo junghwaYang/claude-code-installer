@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import ErrorBoundary from './components/ErrorBoundary';
 import Welcome from './components/Welcome';
 import SystemCheck from './components/SystemCheck';
@@ -7,7 +7,7 @@ import LoginGuide from './components/LoginGuide';
 import Complete from './components/Complete';
 import StepIndicator from './components/StepIndicator';
 import LanguageToggle from './components/LanguageToggle';
-import { useInstaller } from './hooks/useInstaller';
+import { useInstaller, type SystemCheckResult } from './hooks/useInstaller';
 
 const App: React.FC = () => {
   const {
@@ -19,6 +19,7 @@ const App: React.FC = () => {
     setSystemCheck,
     updateInstallProgress,
     addLog,
+    overallProgress,
   } = useInstaller();
 
   const { currentStep, locale, systemCheck, installProgress, logs } = state;
@@ -28,13 +29,13 @@ const App: React.FC = () => {
   }, [goToStep]);
 
   const handleSystemCheckComplete = useCallback(
-    (result: any) => {
+    (result: SystemCheckResult) => {
       setSystemCheck(result);
     },
     [setSystemCheck]
   );
 
-  const currentStepContent = useMemo(() => {
+  const renderStepContent = () => {
     switch (currentStep) {
       case 1:
         return <Welcome locale={locale} onNext={nextStep} />;
@@ -57,6 +58,7 @@ const App: React.FC = () => {
             onProgressUpdate={updateInstallProgress}
             onAddLog={addLog}
             logs={logs}
+            overallProgress={overallProgress}
           />
         );
       case 4:
@@ -68,19 +70,7 @@ const App: React.FC = () => {
       default:
         return <Welcome locale={locale} onNext={nextStep} />;
     }
-  }, [
-    currentStep,
-    locale,
-    systemCheck,
-    installProgress,
-    logs,
-    nextStep,
-    prevStep,
-    handleSkipToComplete,
-    handleSystemCheckComplete,
-    updateInstallProgress,
-    addLog,
-  ]);
+  };
 
   return (
     <ErrorBoundary>
@@ -111,7 +101,7 @@ const App: React.FC = () => {
               }
             }}
           >
-            {currentStepContent}
+            {renderStepContent()}
           </div>
         </div>
 

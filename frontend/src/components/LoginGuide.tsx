@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { OpenTerminal, OpenURL } from '../../wailsjs/go/main/App';
 import { type Locale, t } from '../hooks/useInstaller';
 
@@ -67,6 +67,14 @@ const translations = {
     ko: '뒤로',
     en: 'Back',
   },
+  errorOpenTerminal: {
+    ko: '터미널을 여는데 실패했습니다',
+    en: 'Failed to open terminal',
+  },
+  errorOpenUrl: {
+    ko: 'URL을 여는데 실패했습니다',
+    en: 'Failed to open URL',
+  },
 };
 
 interface LoginGuideProps {
@@ -132,19 +140,28 @@ const guideSteps = [
 ];
 
 const LoginGuide: React.FC<LoginGuideProps> = ({ locale, onNext, onBack }) => {
+  const [terminalError, setTerminalError] = useState<string>('');
+  const [urlError, setUrlError] = useState<string>('');
+
   const handleOpenTerminal = async () => {
     try {
+      setTerminalError('');
       await OpenTerminal();
     } catch (err) {
       console.error('Failed to open terminal:', err);
+      setTerminalError(t(translations, 'errorOpenTerminal', locale));
+      setTimeout(() => setTerminalError(''), 5000);
     }
   };
 
   const handleCreateAccount = async () => {
     try {
+      setUrlError('');
       await OpenURL('https://console.anthropic.com/');
     } catch (err) {
       console.error('Failed to open URL:', err);
+      setUrlError(t(translations, 'errorOpenUrl', locale));
+      setTimeout(() => setUrlError(''), 5000);
     }
   };
 
@@ -210,21 +227,28 @@ const LoginGuide: React.FC<LoginGuideProps> = ({ locale, onNext, onBack }) => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3 mt-6 opacity-0 animate-fade-in-up" style={{ animationDelay: '450ms' }}>
-          <button onClick={handleOpenTerminal} className="btn-primary flex-1">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.5" />
-              <path d="M4 7L6 9L4 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            {t(translations, 'openTerminal', locale)}
-          </button>
-          <button onClick={handleCreateAccount} className="btn-secondary flex-1">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.5" />
-              <path d="M3 14C3 11.2386 5.23858 9 8 9C10.7614 9 13 11.2386 13 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-            {t(translations, 'createAccount', locale)}
-          </button>
+        <div className="mt-6 opacity-0 animate-fade-in-up" style={{ animationDelay: '450ms' }}>
+          <div className="flex gap-3">
+            <button onClick={handleOpenTerminal} className="btn-primary flex-1">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M4 7L6 9L4 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {t(translations, 'openTerminal', locale)}
+            </button>
+            <button onClick={handleCreateAccount} className="btn-secondary flex-1">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M3 14C3 11.2386 5.23858 9 8 9C10.7614 9 13 11.2386 13 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              {t(translations, 'createAccount', locale)}
+            </button>
+          </div>
+          {(terminalError || urlError) && (
+            <p className="text-xs text-red-400 mt-2 ml-1">
+              {terminalError || urlError}
+            </p>
+          )}
         </div>
       </div>
 

@@ -4,9 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
+
+	"claude-code-installer/internal/httputil"
 )
 
 const (
@@ -18,8 +21,8 @@ const (
 	githubAPIBaseURL = "https://api.github.com"
 	// updateCheckTimeout is the timeout for update check HTTP requests.
 	updateCheckTimeout = 15 * time.Second
-	// maxRedirects is the maximum number of HTTP redirects allowed.
-	maxRedirects = 10
+	// maxAPIResponseSize is the maximum size of API responses to prevent memory exhaustion.
+	maxAPIResponseSize = 1 * 1024 * 1024 // 1MB
 )
 
 // UpdateInfo contains information about available updates.
@@ -32,12 +35,12 @@ type UpdateInfo struct {
 
 // GitHubRelease represents a GitHub release response.
 type GitHubRelease struct {
-	TagName    string         `json:"tag_name"`
-	Name       string         `json:"name"`
-	Draft      bool           `json:"draft"`
-	Prerelease bool           `json:"prerelease"`
-	Assets     []GitHubAsset  `json:"assets"`
-	HTMLURL    string         `json:"html_url"`
+	TagName    string        `json:"tag_name"`
+	Name       string        `json:"name"`
+	Draft      bool          `json:"draft"`
+	Prerelease bool          `json:"prerelease"`
+	Assets     []GitHubAsset `json:"assets"`
+	HTMLURL    string        `json:"html_url"`
 }
 
 // GitHubAsset represents an asset attached to a GitHub release.
@@ -54,36 +57,13 @@ type UpdateChecker struct {
 	httpClient *http.Client
 }
 
-// newTrustedCheckRedirect creates a CheckRedirect function that only allows HTTPS redirects to trusted hosts.
-func newTrustedCheckRedirect(trustedHosts []string) func(*http.Request, []*http.Request) error {
-	return func(req *http.Request, via []*http.Request) error {
-		if len(via) >= maxRedirects {
-			return fmt.Errorf("too many redirects")
-		}
-		if req.URL.Scheme != "https" {
-			return fmt.Errorf("redirect to non-HTTPS scheme: %s", req.URL.Scheme)
-		}
-		host := req.URL.Hostname()
-		for _, trusted := range trustedHosts {
-			if host == trusted {
-				return nil
-			}
-		}
-		return fmt.Errorf("redirect to untrusted host: %s", host)
-	}
-}
-
 // NewUpdateChecker creates a new UpdateChecker instance with context support.
 func NewUpdateChecker(ctx context.Context) *UpdateChecker {
 	return &UpdateChecker{
 		ctx: ctx,
 		httpClient: &http.Client{
-			Timeout: updateCheckTimeout,
-			CheckRedirect: newTrustedCheckRedirect([]string{
-				"github.com",
-				"api.github.com",
-				"objects.githubusercontent.com",
-			}),
+			Timeout:       updateCheckTimeout,
+			CheckRedirect: httputil.NewTrustedCheckRedirect(httputil.GitHubTrustedHosts()),
 		},
 	}
 }
@@ -133,7 +113,7 @@ func (uc *UpdateChecker) GetLatestRelease() (string, string, error) {
 	}
 
 	var release GitHubRelease
-	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
+	if err := json.NewDecoder(io.LimitReader(resp.Body, maxAPIResponseSize)).Decode(&release); err != nil {
 		return "", "", fmt.Errorf("failed to parse release response: %w", err)
 	}
 

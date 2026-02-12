@@ -1,12 +1,14 @@
 package detector
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 )
 
 // SoftwareStatus represents the installation status of a software component.
@@ -173,9 +175,12 @@ func CheckAll() SystemCheckResult {
 	}
 }
 
-// runCommand executes a command and returns its trimmed stdout output.
+// runCommand executes a command with a timeout and returns its trimmed stdout output.
 func runCommand(name string, args ...string) (string, error) {
-	cmd := exec.Command(name, args...)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, name, args...)
 
 	// On Windows, hide the console window for background commands
 	hideConsoleWindow(cmd)

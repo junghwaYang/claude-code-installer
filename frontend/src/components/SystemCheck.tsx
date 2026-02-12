@@ -142,11 +142,11 @@ const SoftwareRow: React.FC<{
   </div>
 );
 
-const LoadingSpinner: React.FC = () => (
+const LoadingSpinner: React.FC<{ locale: Locale }> = ({ locale }) => (
   <div className="flex flex-col items-center justify-center py-16">
     <div className="w-8 h-8 rounded-full border border-white/10 border-t-[#da7756] animate-spin-slow mb-4" />
     <p className="text-sm text-white/40 animate-pulse-soft">
-      Checking system...
+      {t(translations, 'checking', locale)}
     </p>
   </div>
 );
@@ -196,7 +196,7 @@ const SystemCheck: React.FC<SystemCheckProps> = ({
       {/* Content */}
       <div className="flex-1 overflow-auto scrollbar-dark">
         {loading ? (
-          <LoadingSpinner />
+          <LoadingSpinner locale={locale} />
         ) : error ? (
           <div className="flex flex-col items-center justify-center py-12">
             <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4">

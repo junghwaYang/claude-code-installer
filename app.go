@@ -71,24 +71,9 @@ func (a *App) CheckSystem() (*SystemCheckResult, error) {
 	detectorResult := detector.CheckAll()
 
 	result := &SystemCheckResult{
-		NodeJS: SoftwareStatus{
-			Name:      detectorResult.NodeJS.Name,
-			Installed: detectorResult.NodeJS.Installed,
-			Version:   detectorResult.NodeJS.Version,
-			Required:  detectorResult.NodeJS.Required,
-		},
-		Git: SoftwareStatus{
-			Name:      detectorResult.Git.Name,
-			Installed: detectorResult.Git.Installed,
-			Version:   detectorResult.Git.Version,
-			Required:  detectorResult.Git.Required,
-		},
-		ClaudeCode: SoftwareStatus{
-			Name:      detectorResult.ClaudeCode.Name,
-			Installed: detectorResult.ClaudeCode.Installed,
-			Version:   detectorResult.ClaudeCode.Version,
-			Required:  detectorResult.ClaudeCode.Required,
-		},
+		NodeJS:          SoftwareStatus(detectorResult.NodeJS),
+		Git:             SoftwareStatus(detectorResult.Git),
+		ClaudeCode:      SoftwareStatus(detectorResult.ClaudeCode),
 		WingetAvailable: detectorResult.WingetAvailable,
 	}
 
@@ -222,8 +207,9 @@ func (a *App) OpenTerminal() error {
 		select {
 		case <-a.ctx.Done():
 			if cmd.Process != nil {
-				cmd.Process.Kill()
+				_ = cmd.Process.Kill()
 			}
+			<-done // Wait for cmd.Wait() to complete, preventing goroutine leak
 		case <-done:
 			// Process exited normally
 		}

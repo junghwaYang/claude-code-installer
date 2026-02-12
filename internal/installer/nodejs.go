@@ -116,24 +116,21 @@ func (i *Installer) installNodeViaMSI() error {
 		return fmt.Errorf("failed to download Node.js installer: %w", err)
 	}
 
-	// Verify download integrity via SHA-256 checksum
+	// Verify download integrity via SHA-256 checksum (mandatory)
 	i.emitProgress("nodejs", "installing", "Verifying download integrity...", 55)
 	shasumsURL := fmt.Sprintf("%s/v%s/SHASUMS256.txt", nodeDownloadBaseURL, nodeLTSVersion)
 	shasumsContent, err := i.fetchTextContent(shasumsURL)
 	if err != nil {
-		// Log warning but don't fail - checksum verification is best-effort
-		i.emitProgress("nodejs", "installing", "Warning: could not fetch checksums, skipping verification", 60)
-	} else {
-		expectedHash, err := findChecksumInSHASUMS(shasumsContent, msiFilename)
-		if err != nil {
-			i.emitProgress("nodejs", "installing", "Warning: checksum not found for this file, skipping verification", 60)
-		} else {
-			if err := verifyFileChecksum(msiPath, expectedHash); err != nil {
-				return fmt.Errorf("Node.js installer integrity check failed: %w", err)
-			}
-			i.emitProgress("nodejs", "installing", "Download integrity verified", 65)
-		}
+		return fmt.Errorf("failed to verify Node.js download integrity (could not fetch checksums): %w", err)
 	}
+	expectedHash, err := findChecksumInSHASUMS(shasumsContent, msiFilename)
+	if err != nil {
+		return fmt.Errorf("failed to verify Node.js download integrity (checksum not found for %s): %w", msiFilename, err)
+	}
+	if err := verifyFileChecksum(msiPath, expectedHash); err != nil {
+		return fmt.Errorf("Node.js installer integrity check failed: %w", err)
+	}
+	i.emitProgress("nodejs", "installing", "Download integrity verified", 65)
 
 	i.emitProgress("nodejs", "installing", "Running Node.js installer...", 70)
 

@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 
 export type Locale = 'ko' | 'en';
 
@@ -152,20 +152,20 @@ export function useInstaller() {
     setState((prev) => ({ ...prev, appVersion: version }));
   }, []);
 
-  const getOverallProgress = useCallback((): number => {
+  const overallProgress = useMemo((): number => {
     const progresses = Object.values(state.installProgress);
     if (progresses.length === 0) return 0;
     const total = progresses.reduce((sum, p) => sum + p.percentage, 0);
     return Math.round(total / progresses.length);
   }, [state.installProgress]);
 
-  const isAllCompleted = useCallback((): boolean => {
+  const isAllCompleted = useMemo((): boolean => {
     return Object.values(state.installProgress).every(
       (p) => p.status === 'completed' || p.status === 'skipped'
     );
   }, [state.installProgress]);
 
-  const hasError = useCallback((): boolean => {
+  const hasError = useMemo((): boolean => {
     return Object.values(state.installProgress).some(
       (p) => p.status === 'error'
     );
@@ -186,7 +186,7 @@ export function useInstaller() {
     clearLogs,
     resetInstallProgress,
     setAppVersion,
-    getOverallProgress,
+    overallProgress,
     isAllCompleted,
     hasError,
   };

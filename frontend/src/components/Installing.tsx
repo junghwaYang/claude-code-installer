@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { InstallAll } from '../../wailsjs/go/main/App';
-import { EventsOn, EventsOff } from '../../wailsjs/runtime/runtime';
+import { EventsOn } from '../../wailsjs/runtime/runtime';
 import { type Locale, type InstallProgress, t } from '../hooks/useInstaller';
 
 const translations = {
@@ -188,6 +188,7 @@ interface InstallingProps {
   onProgressUpdate: (progress: InstallProgress) => void;
   onAddLog: (log: string) => void;
   logs: string[];
+  overallProgress: number;
 }
 
 const Installing: React.FC<InstallingProps> = ({
@@ -197,6 +198,7 @@ const Installing: React.FC<InstallingProps> = ({
   onProgressUpdate,
   onAddLog,
   logs,
+  overallProgress,
 }) => {
   const [showLogs, setShowLogs] = useState(false);
   const [installStarted, setInstallStarted] = useState(false);
@@ -268,17 +270,9 @@ const Installing: React.FC<InstallingProps> = ({
 
     return () => {
       unsubscribe();
-      EventsOff('install:progress');
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const overallProgress = (() => {
-    const steps = Object.values(installProgress);
-    if (steps.length === 0) return 0;
-    const total = steps.reduce((sum, s) => sum + s.percentage, 0);
-    return Math.round(total / steps.length);
-  })();
 
   const handleRetry = () => {
     setHasError(false);

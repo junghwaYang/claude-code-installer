@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { OpenTerminal, OpenURL } from '../../wailsjs/go/main/App';
 import { Quit } from '../../wailsjs/runtime/runtime';
 import { type Locale, type SystemCheckResult, t } from '../hooks/useInstaller';
@@ -59,6 +59,14 @@ const translations = {
   congratulations: {
     ko: '축하합니다!',
     en: 'Congratulations!',
+  },
+  errorOpenTerminal: {
+    ko: '터미널을 여는데 실패했습니다',
+    en: 'Failed to open terminal',
+  },
+  errorOpenLink: {
+    ko: '링크를 여는데 실패했습니다',
+    en: 'Failed to open link',
   },
 };
 
@@ -127,19 +135,28 @@ const SoftwareVersionRow: React.FC<{
 );
 
 const Complete: React.FC<CompleteProps> = ({ locale, systemCheck }) => {
+  const [terminalError, setTerminalError] = useState<string>('');
+  const [linkError, setLinkError] = useState<string>('');
+
   const handleOpenTerminal = async () => {
     try {
+      setTerminalError('');
       await OpenTerminal();
     } catch (err) {
       console.error('Failed to open terminal:', err);
+      setTerminalError(t(translations, 'errorOpenTerminal', locale));
+      setTimeout(() => setTerminalError(''), 5000);
     }
   };
 
   const handleOpenLink = async (url: string) => {
     try {
+      setLinkError('');
       await OpenURL(url);
     } catch (err) {
       console.error('Failed to open URL:', err);
+      setLinkError(t(translations, 'errorOpenLink', locale));
+      setTimeout(() => setLinkError(''), 5000);
     }
   };
 
@@ -231,23 +248,35 @@ const Complete: React.FC<CompleteProps> = ({ locale, systemCheck }) => {
             </button>
           ))}
         </div>
+        {linkError && (
+          <p className="text-xs text-red-400 mt-2 ml-1">
+            {linkError}
+          </p>
+        )}
       </div>
 
       {/* Action Buttons */}
       <div
-        className="w-full max-w-md flex gap-3 mt-auto opacity-0 animate-fade-in-up"
+        className="w-full max-w-md mt-auto opacity-0 animate-fade-in-up"
         style={{ animationDelay: '350ms' }}
       >
-        <button onClick={handleOpenTerminal} className="btn-primary flex-1">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.5" />
-            <path d="M4 7L6 9L4 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          {t(translations, 'launchTerminal', locale)}
-        </button>
-        <button onClick={handleExit} className="btn-secondary">
-          {t(translations, 'exit', locale)}
-        </button>
+        <div className="flex gap-3">
+          <button onClick={handleOpenTerminal} className="btn-primary flex-1">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M4 7L6 9L4 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            {t(translations, 'launchTerminal', locale)}
+          </button>
+          <button onClick={handleExit} className="btn-secondary">
+            {t(translations, 'exit', locale)}
+          </button>
+        </div>
+        {terminalError && (
+          <p className="text-xs text-red-400 mt-2 ml-1">
+            {terminalError}
+          </p>
+        )}
       </div>
     </div>
   );

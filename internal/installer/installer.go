@@ -16,13 +16,14 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"claude-code-installer/internal/httputil"
 )
 
 const (
 	maxDownloadSize     = 500 * 1024 * 1024 // 500 MB
 	maxTextResponseSize = 1 * 1024 * 1024   // 1 MB
 	defaultMaxRetries   = 3
-	maxRedirects        = 10
 	downloadTimeout     = 10 * time.Minute
 	apiRequestTimeout   = 30 * time.Second
 
@@ -30,40 +31,6 @@ const (
 	defaultNodeJSPath = `C:\Program Files\nodejs`
 	defaultGitPath    = `C:\Program Files\Git\cmd`
 )
-
-var (
-	gitHubTrustedHosts = []string{
-		"github.com",
-		"api.github.com",
-		"objects.githubusercontent.com",
-	}
-	allTrustedHosts = []string{
-		"github.com",
-		"api.github.com",
-		"objects.githubusercontent.com",
-		"nodejs.org",
-		"cdn.nodejs.org",
-	}
-)
-
-// newTrustedCheckRedirect creates a CheckRedirect function that only allows HTTPS redirects to trusted hosts.
-func newTrustedCheckRedirect(trustedHosts []string) func(*http.Request, []*http.Request) error {
-	return func(req *http.Request, via []*http.Request) error {
-		if len(via) >= maxRedirects {
-			return fmt.Errorf("too many redirects")
-		}
-		if req.URL.Scheme != "https" {
-			return fmt.Errorf("redirect to non-HTTPS scheme: %s", req.URL.Scheme)
-		}
-		host := req.URL.Hostname()
-		for _, trusted := range trustedHosts {
-			if host == trusted {
-				return nil
-			}
-		}
-		return fmt.Errorf("redirect to untrusted host: %s", host)
-	}
-}
 
 // InstallProgress represents the current progress of an installation step.
 type InstallProgress struct {
@@ -141,7 +108,7 @@ func (i *Installer) pollForCommand(cmdName string, maxAttempts int) error {
 		case <-time.After(1 * time.Second):
 		}
 	}
-	return nil
+	return fmt.Errorf("%s not found in PATH after %d attempts", cmdName, maxAttempts)
 }
 
 // verifyExecutable checks that an executable is accessible after installation.
@@ -203,7 +170,7 @@ func (i *Installer) downloadFile(url, destPath, stepName string) error {
 
 	client := &http.Client{
 		Timeout:       downloadTimeout,
-		CheckRedirect: newTrustedCheckRedirect(allTrustedHosts),
+		CheckRedirect: httputil.NewTrustedCheckRedirect(httputil.AllTrustedHosts()),
 	}
 
 	resp, err := client.Do(req)
@@ -348,7 +315,7 @@ func (i *Installer) fetchTextContent(url string) (string, error) {
 
 	client := &http.Client{
 		Timeout:       apiRequestTimeout,
-		CheckRedirect: newTrustedCheckRedirect(allTrustedHosts),
+		CheckRedirect: httputil.NewTrustedCheckRedirect(httputil.AllTrustedHosts()),
 	}
 	resp, err := client.Do(req)
 	if err != nil {
