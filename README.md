@@ -36,6 +36,14 @@ Node.js, Git, Claude Code를 한 번에 자동으로 설치합니다. 터미널 
 3. "설치 시작" 버튼 클릭
 4. 완료! 터미널에서 `claude` 입력하여 사용
 
+### 실행이 안 될 때 (Windows 보안 차단)
+
+다운로드한 파일이 Windows에 의해 차단되면 더블클릭해도 실행되지 않을 수 있습니다.
+
+1. `claude-code-installer.exe` 우클릭 → **속성(Properties)**
+2. 하단 **보안(Security)** 섹션의 **차단 해제(Unblock)** 체크
+3. **적용(Apply)** → **확인(OK)** 후 다시 실행
+
 ### 설치되는 항목
 
 | 구성 요소 | 버전 | 용도 |
@@ -98,6 +106,14 @@ Automatically installs Node.js, Git, and Claude Code with zero configuration.
 2. Run the installer (double-click)
 3. Click "Start Installation"
 4. Done! Type `claude` in your terminal to get started
+
+### If the app does not launch (Windows security block)
+
+Windows may block downloaded executables, which can make double-click appear to do nothing.
+
+1. Right-click `claude-code-installer.exe` → **Properties**
+2. In the **Security** section, check **Unblock**
+3. Click **Apply** → **OK**, then run the app again
 
 ### What Gets Installed
 
